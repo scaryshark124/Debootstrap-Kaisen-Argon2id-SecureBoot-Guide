@@ -47,5 +47,55 @@ In order to follow along with this guide you will need Debian. Although, you can
        - Set boot entry for signed shim
   
   11. Exit chroot, close logical volumes, and physical volume.
-  12. Reboot and register MOK with MOK manager. 
+  12. Reboot and register MOK with MOK manager.
+
+## Installing Dependencies
+
+## Partitioning the USB thumb drive
+
+## Creating the Luks2 encrypted partition
+
+## Creating Physical volume, Volume group, Logical Volume
+
+## Creating the File systems
+
+## Mounting the root and EFI partitions
+
+## Prepare debootstrap to build Kaisen
+
+## Debootstrap Kaisen
+
+## Prepare for chroot
+
+## chroot into Kaisen
+
+  ### Build the system
+  
+  ### Install base packages
+  
+  ### Install build dependencies for Grub
+  
+  ### Create key for initramfs unlock
+  
+  ### Link key to unlock partition during initramfs stage
+  
+  ### Create user accounts
+  
+  ### Prepare for building grub2 from source
+  
+  ### Build grub2 including ArchLinux's argon2 patches
+  
+  ### Create grub configuration and install grub2 to EFI
+  
+  ### Install signed shim and MOK key manager to EFI
+  
+  ### Create Machine Owner Key (MOK)
+  
+  ### Sign and verify vmlinuz and grubx64.efi
+  
+  ### Set boot entry for signed shim
+
+## Exit chroot, close logical volumes, and physical volume
+
+## Reboot and register MOK with MOK manager
                 
