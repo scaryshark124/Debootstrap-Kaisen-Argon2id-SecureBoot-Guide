@@ -443,7 +443,7 @@ I will create a user:
 ```
 root@debian:/# useradd -mG cdrom,floppy,sudo,audio,dip,video,plugdev,netdev -s /usr/bin/bash -c 'Crunchy Taco' crunchy
 ```
-I will not create a password for the new user:
+I will now create a password for the new user:
 ```
 root@debian:/#  passwd crunchy
 New password: 
