@@ -23,44 +23,6 @@ root@debian:~# source ~/.bashrc
 root@debian:~# echo $CB
 /mnt/kaisen
 ```
-## Sections
-
-   1. Installing Dependencies
- 
-   2. Partitioning the USB thumb drive
-   
-   3. Creating the Luks2 encrypted partition
-   
-   4. Creating Physical volume, Volume group, Logical Volume
-   
-   5. Creating the File systems
-   
-   6. Mounting the root and EFI partitions
-   
-   7. Prepare debootstrap to build Kaisen
-   
-   8. Debootstrap Kaisen
-   
-   9. Prepare for chroot
-   
-   10. chroot into Kaisen
-       - Build the system
-       - Install base packages
-       - Install build dependencies for Grub
-       - Create key for initramfs unlock
-       - Link key to unlock partition during initramfs stage
-       - Create user accounts
-       - Prepare for building grub2 from source
-       - Build grub2 including ArchLinux's argon2 patches
-       - Create grub configuration and install grub2 to EFI
-       - Install signed shim and MOK key manager to EFI
-       - Create Machine Owner Key (MOK)
-       - Sign and verify vmlinuz and grubx64.efi
-       - Set boot entry for signed shim
-  
-  11. Exit chroot, close logical volumes, and physical volume.
-  12. Reboot and register MOK with MOK manager.
-
 ## Installing Dependencies
 
 I will edit the sources.list to include contrib and non-free. Then I will go ahead update and upgrade.  
@@ -332,13 +294,11 @@ root@debian:~# wget https://deb.kaisenlinux.org/pool/main/k/kaisen-archive-keyri
 root@debian:~# dpkg -i kaisen-archive-keyring_2024+kaisen2_all.deb
 ```
 
-## Debootstrap Kaisen
 If everything has went well so far you should be able to run this:
 ```
 root@debian:~# debootstrap --components=main,contrib,non-free,non-free-firmware kaisen-rolling $CB https://deb.kaisenlinux.org
 ```
 
-## Prepare for chroot
 I will create a few things before using chroot. I will use a tool from arch-install-scripts to generate an fstab:
 ```
 root@debian:~# genfstab -U $CB >> $CB/etc/fstab
@@ -357,12 +317,10 @@ ff02::2  	ip6-allrouters
 EOF
 ```
 
-## chroot into Kaisen
 I will use arch-chroot from arch-install-scripts. This will automatically mount the psuedo filesystems and the resolv.conf for internet connection. arch-chroot will also automatically unmount when exiting chroot. This streamlines the chroot process.
 ```
 root@debian:~# arch-chroot /$CB /bin/bash --login
 ```
-  ### Build the system
 I will set a new passowrd for root.
 ```
 root@debian:/# passwd
@@ -406,23 +364,25 @@ I will install the linux headers and linux image along with the logical volume m
 ```
 root@debian:/# apt install --fix-missing lvm2 linux-headers-amd64 linux-image-amd64
 ```
- ### Install build dependencies for Grub
- 
+
  I will install what I need to compile grub from source:
 ```
 root@debian:/# apt install --fix-missing shim-signed shim-helpers-amd64-signed libalpm13t64 sudo git curl libarchive-tools help2man python3 rsync texinfo texinfo-lib ttf-bitstream-vera build-essential dosfstools efibootmgr uuid-runtime efivar mtools os-prober dmeventd libdevmapper-dev libdevmapper-event1.02.1 libdevmapper1.02.1 libfont-freetype-perl python3-freetype libghc-gi-freetype2-dev libghc-gi-freetype2-prof fuse2fs libconfuse2 libfuse2t64 gettext xorriso libisoburn1t64 libisoburn-dev autogen gnulib libfreetype-dev pkg-config m4 libtool automake flex fuse3 libfuse3-dev gawk autoconf-archive rdfind fonts-dejavu lzma lzma-dev liblzma5 liblzma-dev liblz1 liblz-dev unifont acl libzfslinux-dev sbsigntool
 ```  
-  ### Create key for initramfs unlock
-  root@debian:/# mkdir -vp /etc/keys
+  I will create the keys directory:
+  ```
+root@debian:/# mkdir -vp /etc/keys
 mkdir: created directory '/etc/keys'
-
-Now we will make sure the luk2 volume gets unlocked during boot. Here is my take on including a key to unlock the root partition during the initramfs stage. So, during the boot process grub runs 'cryptomount -u SOME-UUID', this is the first prompt for password for grub to access the /boot directory. I want to note, that during this time the entire partition is unlocked, not just the /boot directory. So, if someone were able to get by the first password prompt and decyrpt the luks2 partition, then having the key is useless. As they will already have control over the entire luks2 partition, not just the /boot directory. I will take measures to ensure proper handling of the key during the initramfs stage. 
-
+```
+Now I will make sure the luk2 volume gets unlocked during boot. Here is my take on including a key to unlock the root partition during the initramfs stage. So, during the boot process grub runs 'cryptomount -u SOME-UUID', this is the first prompt for password for grub to access the /boot directory. I want to note, that during this time the entire partition is unlocked, not just the /boot directory. So, if someone were able to get by the first password prompt and decyrpt the luks2 partition, then having the key is useless. As they will already have control over the entire luks2 partition, not just the /boot directory. I will take measures to ensure proper handling of the key during the initramfs stage. 
+```
 root@debian:/# ( umask 0077 && dd if=/dev/urandom bs=1 count=128 of=/etc/keys/root.key conv=excl,fsync )
 128+0 records in
 128+0 records out
 128 bytes copied, 0.0195378 s, 6.6 kB/s
-
+```
+To make sure to set owner and group to root and change permissions so that only the owner can read, write, and execute. I will also set immutable.
+```
 root@debian:/# chown -vR root:root /etc/keys
 ownership of '/etc/keys/root.key' retained as root:root
 ownership of '/etc/keys' retained as root:root
@@ -432,47 +392,28 @@ mode of '/etc/keys' changed from 0755 (rwxr-xr-x) to 0600 (rw-------)
 mode of '/etc/keys/root.key' retained as 0600 (rw-------)
 
 root@debian:/# chattr +i /etc/keys/root.key
-  
-  ### Link key to unlock partition during initramfs stage
-
-  After you move the keys and cert over then run these commands to make sure to set owner and group to root and change permissions so that only the owner can read, write, and execute. I will also set immutable. 
-
+```  
+I will add the key:
+```
 root@debian:/# cryptsetup --cipher aes-xts-plain64:sha512 -s 512 -h sha512 -i 10000 --pbkdf=argon2id luksAddKey /dev/sdb2 /etc/keys/root.key
 Enter any existing passphrase: 
+```
 
-## I will now configure /etc/crypttab.
-
+I will now configure /etc/crypttab.
+```
 root@debian:/# echo "kaisen-cryptlvm UUID=$(blkid -s UUID -o value /dev/sdb2) /etc/keys/root.key luks,discard,key-slot=1" >> /etc/crypttab
 
 root@debian:/# cat /etc/crypttab
 # <target name>	<source device>		<key file>	<options>
 kaisen-cryptlvm UUID=eb6fbac7-772d-43e7-bc7f-c67155c3b658 /etc/keys/root.key luks,discard,key-slot=1
-
+```
 I will add this line so initramfs is able to find the key
-
+```
 root@debian:/# echo "KEYFILE_PATTERN=\"/etc/keys/*.key\"" >>/etc/cryptsetup-initramfs/conf-hook
-
+```
 I will set UMASK to restrictive value to avoid leaking key material. I will then make sure restrictive permissions are set and the key is available in initramfs.
-
+```
 root@debian:/# echo UMASK=0077 >>/etc/initramfs-tools/initramfs.conf
-  
-  ### Create user accounts
-  
-  ### Prepare for building grub2 from source
-  
-  ### Build grub2 including ArchLinux's argon2 patches
-  
-  ### Create grub configuration and install grub2 to EFI
-  
-  ### Install signed shim and MOK key manager to EFI
-  
-  ### Create Machine Owner Key (MOK)
-  
-  ### Sign and verify vmlinuz and grubx64.efi
-  
-  ### Set boot entry for signed shim
+```
 
-## Exit chroot, close logical volumes, and physical volume
-
-## Reboot and register MOK with MOK manager
                 
