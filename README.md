@@ -714,7 +714,7 @@ root@debian:/# chattr +i /etc/keys/MOK/crunchy-Kais-MOK.cer
 
 root@debian:/# chattr +i /etc/keys/MOK/MOK.crt
 ```
-Now I will check the signatures and sine vmlinuz and grubx64. 
+Now I will check the signatures and sign vmlinuz and grubx64. 
 ```
 sbverify --list /boot/$(ls /boot | grep vmlinuz)
 No signature table present
