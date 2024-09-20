@@ -727,14 +727,7 @@ root@debian:/# sbverify --list /boot/$(ls /boot | grep vmlinuz)
 signature 1
 image signature issuers:
  - /CN=Crunchy-Kaisen Crunchy-Taco
-image signature certificates:root@debian:~# cryptsetup close /dev/vg1/swap
-
-root@debian:~# cryptsetup close /dev/vg1/root
-
-root@debian:~# cryptsetup close kaisen-cryptlvm
-
-
-Now you just need to reboot and register you key with the MOK manager. the shim will automatically start the MOK manager. 
+image signature certificates:
  - subject: /CN=Crunchy-Kaisen Crunchy-Taco
    issuer:  /CN=Crunchy-Kaisen Crunchy-Taco
 
