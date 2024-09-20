@@ -5,8 +5,7 @@ I will demonstrate how to use debootstrap to build Kaisen Linux on a USB thumb d
 ## Build Environment
 In order to follow along with this guide you will need Debian. Although, you can use this guide (with a few tweaks) with other linux distributions. I will be using debian-live-12.5.0-amd64-xfce.iso to make the commands in this guide flow more smoothly if you build from a fresh Debian live Iso. However, with that said, you should have a basic understanding of linux commands and file structure to troubleshoot. If you are new to Linux I will suggest a free Introduction to Linux course (https://training.linuxfoundation.org/training/introduction-to-linux/) from the Linux Foundation.
 
-'''
-user@debian:~$ sudo su -
+'''user@debian:~$ sudo su -
 
 root@debian:~# lsblk
 NAME                 MAJ:MIN RM   SIZE RO TYPE  MOUNTPOINTS
@@ -40,8 +39,7 @@ echo 'CB="/mnt/kaisen"' >> ~/.bashrc
 
 source ~/.bashrc
 
-echo $CB
-'''
+echo $CB'''
 
 
 
