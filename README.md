@@ -5,6 +5,47 @@ I will demonstrate how to use debootstrap to build Kaisen Linux on a USB thumb d
 ## Build Environment
 In order to follow along with this guide you will need Debian. Although, you can use this guide (with a few tweaks) with other linux distributions. I will be using debian-live-12.5.0-amd64-xfce.iso to make the commands in this guide flow more smoothly if you build from a fresh Debian live Iso. However, with that said, you should have a basic understanding of linux commands and file structure to troubleshoot. If you are new to Linux I will suggest a free Introduction to Linux course (https://training.linuxfoundation.org/training/introduction-to-linux/) from the Linux Foundation.
 
+'''
+user@debian:~$ sudo su -
+
+root@debian:~# lsblk
+NAME                 MAJ:MIN RM   SIZE RO TYPE  MOUNTPOINTS
+loop0                  7:0    0   2.5G  1 loop  /usr/lib/live/mount/rootfs/filesystem.squashfs
+                                                /run/live/rootfs/filesystem.squashfs
+sda                    8:0    1   239G  0 disk  
+├─sda1                 8:1    1   500M  0 part  
+│ └─cryptlocker      253:0    0   484M  0 crypt 
+│   └─G1-CryptLocker 253:1    0   480M  0 lvm   /mnt
+└─sda2                 8:2    1 238.5G  0 part  /usr/lib/live/mount/medium
+                                                /run/live/medium
+sdb                    8:16   1  28.7G  0 disk  
+├─sdb1                 8:17   1   200M  0 part  
+└─sdb2                 8:18   1  28.5G  0 part  
+
+I will create a directory and variable for the mount point. you can use commands such as 'lsusb' or 'dmesg' to identify the USB you plan to build on, but it is much simpler to run 'lsblk' before you plug in the USB, and then again after you plug in the USB. I will be using a 32GB USB, which on my system is '/dev/sdb'
+
+####ADD PROXY TO APT########
+
+cat > /etc/apt/apt.conf.d/95Proxies << EOF
+Acquire::http::Proxy "http://192.168.49.1:8000";
+Acquire::https::Proxy "http://192.168.49.1:8000";
+Acquire::ftp::Proxy "http://192.168.49.1:8000";
+EOF
+
+###############################
+
+mkdir -vp /mnt/kaisen
+
+echo 'CB="/mnt/kaisen"' >> ~/.bashrc
+
+source ~/.bashrc
+
+echo $CB
+'''
+
+
+
+
 ### What you need:
   Debian live ISO (12.5.0 or later)
      - https://www.debian.org/CD/live/
